@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+  pre_build:
+    commands:
+      - echo creating build directories
+      - mkdir python
+      - mkdir target
+  build:
+    commands:
+      - echo creating lambda layer package
+      - pip install -r openai-lambda-layer-requirements.txt -t ./python
+      - zip -r ./OpenAILambdaLayer.zip ./python
+      - mv ./OpenAILambdaLayer.zip ./target
+  post_build:
+    commands:
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - target/OpenAILambdaLayer.zip
