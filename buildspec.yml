@@ -19,7 +19,7 @@ phases:
 
       - echo creating lambda function package
       - cp -r ./src ./build
-      - cd ./build;zip -r OpenAIChat.zip" *
+      - cd ./build;zip -r OpenAIChat.zip *
       - mv ./OpenAIChat.zip ./target
   post_build:
     commands:
