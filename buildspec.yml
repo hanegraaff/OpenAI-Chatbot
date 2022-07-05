@@ -27,3 +27,4 @@ phases:
 artifacts:
   files:
     - target/OpenAILambdaLayer.zip
+    - target/OpenAIChat.zip
