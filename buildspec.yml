@@ -8,6 +8,7 @@ phases:
     commands:
       - echo creating build directories
       - mkdir python
+      - mkdir build
       - mkdir target
   build:
     commands:
@@ -15,6 +16,11 @@ phases:
       - pip install -r openai-lambda-layer-requirements.txt -t ./python
       - zip -r ./OpenAILambdaLayer.zip ./python
       - mv ./OpenAILambdaLayer.zip ./target
+
+      - echo creating lambda function package
+      - cp -r ./src ./build
+      - cd ./build;zip -r OpenAIChat.zip" *
+      - mv ./OpenAIChat.zip ./target
   post_build:
     commands:
       - echo Build completed on `date`
