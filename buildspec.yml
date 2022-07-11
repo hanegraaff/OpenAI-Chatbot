@@ -19,7 +19,7 @@ phases:
 
       - echo creating lambda function package
 
-      - pip install -r requirements.txt -t ./build
+      - pip install -r ./src/requirements.txt -t ./build
       - cp ./src/*.py./build
       - zip -r ./build/OpenAIChat.zip ./build/*
       - mv ./OpenAIChat.zip ./target
