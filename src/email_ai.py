@@ -6,11 +6,11 @@ import logging
 import os
 import openai
 from email_reply_parser import EmailReplyParser
-from ses_events.multipart_alt_sample import ses_event
+#from ses_events.multipart_alt_sample import sns_event
 
 ses_client = boto3.client('ses')
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] - %(message)s')
+#logging.basicConfig(level=logging.INFO, format='[%(levelname)s] - %(message)s')
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -20,8 +20,12 @@ def lambda_handler(event, context):
     try:
         openai.api_key = os.getenv("OPENAI_API_KEY")
         
-        #ses_event = json.loads(event['Records'][0]['Sns']['Message'])
+        ses_event = json.loads(event['Records'][0]['Sns']['Message'])
+        #ses_event = json.loads(sns_event['Records'][0]['Sns']['Message'])
+
+        
         log.info(ses_event)
+        
         (sent_from, subject, message) = parse_ses_event(ses_event)
 
         if subject.lower().startswith("fw:") or subject.lower().startswith("fwd:"):
@@ -31,9 +35,9 @@ def lambda_handler(event, context):
 
         log.info("Extracted the following prompt: %s" % prompt)
 
-        '''response = openai.Completion.create(
+        response = openai.Completion.create(
             engine="text-davinci-002",
-            prompt=ai_response,
+            prompt=prompt,
             temperature=0.7,
             max_tokens=250,
             top_p=1.0,
@@ -52,10 +56,10 @@ def lambda_handler(event, context):
         
         
         send_email(sent_from, "RE:%s" % subject, openai_response)
-        '''
 
     except Exception as e:
         log.error(e)
+        if 
         send_email(sent_from, "RE:%s" % subject, "Oh nose! There was an error: %s" % e)
         raise e
     
@@ -137,6 +141,4 @@ def send_email(email_to : str, subject : str, body : str):
         log.info("resonse from ses is: %s" % response)
 
     
-lambda_handler(None, None)
-
-
+#lambda_handler(None, None)
