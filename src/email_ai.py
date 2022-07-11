@@ -17,6 +17,8 @@ log.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     
+    sent_from = ""
+
     try:
         openai.api_key = os.getenv("OPENAI_API_KEY")
         
@@ -59,8 +61,8 @@ def lambda_handler(event, context):
 
     except Exception as e:
         log.error(e)
-        if 
-        send_email(sent_from, "RE:%s" % subject, "Oh nose! There was an error: %s" % e)
+        if sent_from != "":
+            send_email(sent_from, "RE:%s" % subject, "Oh nose! There was an error: %s" % e)
         raise e
     
     
