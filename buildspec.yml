@@ -22,7 +22,7 @@ phases:
       - pip install -r ./src/requirements.txt -t ./build
       - cp ./src/*.py ./build
       - zip -r ./build/OpenAIChat.zip ./build/*
-      - mv ./OpenAIChat.zip ./target
+      - mv ./build/OpenAIChat.zip ./target
   post_build:
     commands:
       - echo Build completed on `date`
