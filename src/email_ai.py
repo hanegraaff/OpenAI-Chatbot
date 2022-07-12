@@ -6,11 +6,9 @@ import logging
 import os
 import openai
 from email_reply_parser import EmailReplyParser
-#from ses_events.multipart_alt_sample import sns_event
+from pkg_resources import ContextualVersionConflict
 
 ses_client = boto3.client('ses')
-
-#logging.basicConfig(level=logging.INFO, format='[%(levelname)s] - %(message)s')
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -21,12 +19,10 @@ def lambda_handler(event, context):
 
     try:
         openai.api_key = os.getenv("OPENAI_API_KEY")
+
+        log.info(event)
         
         ses_event = json.loads(event['Records'][0]['Sns']['Message'])
-        #ses_event = json.loads(sns_event['Records'][0]['Sns']['Message'])
-
-        
-        log.info(ses_event)
         
         (sent_from, subject, message) = parse_ses_event(ses_event)
 
@@ -70,12 +66,18 @@ def lambda_handler(event, context):
 def parse_ses_event(ses_event : object): #-> tuple
     log.info("Parsing SES Email")
 
+    def base64decode(msg):
+        try:
+            return base64.b64decode(msg).decode("utf-8")
+        except:
+            return msg
+
     sent_from = ses_event['mail']['source']
     sent_to = ses_event['mail']['destination'][0]
     subject = ses_event['mail']['commonHeaders']['subject']
-    content = base64.b64decode(ses_event['content'])
+    content = base64decode(ses_event['content'])
     
-    msg = email.message_from_string(str(content.decode("utf-8") ))
+    msg = email.message_from_string(content)
     is_multipart = msg.is_multipart()
     
     log.info("Sent From: %s" % sent_from)
@@ -84,8 +86,9 @@ def parse_ses_event(ses_event : object): #-> tuple
     log.info("Content Type: %s" % msg.get_content_type())
     log.info("Multipart? : %s" % is_multipart)
 
-    message_obj = email.message_from_string(str(content.decode("utf-8") ))
+    message_obj = email.message_from_string(content)
     if is_multipart:
+        log.info("Processing Multipart email")
         message = ""
 
         for part in message_obj.walk():
@@ -95,15 +98,18 @@ def parse_ses_event(ses_event : object): #-> tuple
             log.debug("Next found content type: %s" % content_type)
             
             if content_type == "text/plain":
-                message = payload
+                message = base64decode(payload)
                 break
 
     else:
-        message = message_obj.get_payload()
+        log.info("Processing Text email")
+        message = base64decode(message_obj.get_payload())
 
     if message == "":
         raise Exception("Could not extract text from the email message")
 
+    log.info("Message Body: %s" % message)
+    
     return (sent_from, subject, message)
 
 
@@ -141,6 +147,3 @@ def send_email(email_to : str, subject : str, body : str):
         )
         
         log.info("resonse from ses is: %s" % response)
-
-    
-#lambda_handler(None, None)
