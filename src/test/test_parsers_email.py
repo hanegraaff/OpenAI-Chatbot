@@ -10,7 +10,8 @@ import test.sns_events.reply_text_plain
 class TestEmailMessage(unittest.TestCase):
 
     def test_reply_text_plain(self):
-        ses_event = json.loads(test.sns_events.reply_text_plain.sns_event['Records'][0]['Sns']['Message'])
+        ses_event = json.loads(
+            test.sns_events.reply_text_plain.sns_event['Records'][0]['Sns']['Message'])
 
         email_msg = EmailMessage(ses_event)
 

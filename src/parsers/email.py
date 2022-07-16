@@ -12,7 +12,7 @@ class EmailMessage():
             try:
                 return base64.b64decode(msg).decode("utf-8")
             except:
-                return msg
+                return msg.decode("utf-8")
 
         try:
             mail_dict = ses_event["mail"]
@@ -41,7 +41,7 @@ class EmailMessage():
 
             for part in message_obj.walk():
                 content_type = part.get_content_type()
-                payload = part.get_payload()
+                payload = part.get_payload(decode=True)
 
                 log.debug("Next found content type: %s" % content_type)
                 
@@ -51,7 +51,7 @@ class EmailMessage():
 
         else:
             log.info("Processing Text email")
-            self.body = base64decode(message_obj.get_payload())
+            self.body = base64decode(message_obj.get_payload(decode=True))
 
         if self.body == "":
             raise Exception("Could not extract body from the email message")

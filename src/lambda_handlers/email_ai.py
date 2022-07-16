@@ -3,6 +3,7 @@ import boto3
 import logging
 import os
 import openai
+import datetime
 from parsers.email import EmailMessage
 from email_reply_parser import EmailReplyParser
 
@@ -17,13 +18,11 @@ def lambda_handler(event, context):
         openai.api_key = os.getenv("OPENAI_API_KEY")
 
         log.info(event)
-        
+
         ses_event = json.loads(event['Records'][0]['Sns']['Message'])
 
         email_msg = None
         email_msg = EmailMessage(ses_event)
-
-
 
         '''if email_msg.subject.lower().startswith("fw:") or email_msg.subject.lower().startswith("fwd:"):
             pass
@@ -41,44 +40,48 @@ def lambda_handler(event, context):
             presence_penalty=0.0,
             echo=False,
             best_of=3
-            )
+        )
 
-            
-        print("Choices: [%d]" % len(response.choices))
-        print("Finish Reason: [%s]" % response.choices[0].get("finish_reason", ""))
-        
+        log.info("Choices: [%d]" % len(response.choices))
+        log.info("Finish Reason: [%s]" %
+                 response.choices[0].get("finish_reason", ""))
+
         openai_response = response.choices[0].get("text", "")
-        print("Response:\n%s" % openai_response)
-        
-        
-        send_email(email_msg.sent_from, "RE:%s" % email_msg.subject, openai_response)
+
+        response = "%s \r\n\r\n====================\r\n\r\nOn %s %s asked: \r\n %s" % (
+            openai_response, datetime.datetime.now().strftime("%b %d, %Y, at %H:%M %p (UTC)"), email_msg.sent_from, email_msg.body)
+
+        log.info("Email Response:\n%s" % response)
+
+        send_email(email_msg.sent_from, "RE:%s" % email_msg.subject, response)
 
     except Exception as e:
         log.error(e)
         if email_msg is not None:
-            send_email(email_msg.sent_from, "RE:%s" % email_msg.subject, "Oh nose! There was an error: %s" % e)
+            send_email(email_msg.sent_from, "RE:%s" %
+                       email_msg.subject, "Oh nose! There was an error: %s" % e)
         raise e
 
 
-def send_email(email_to : str, subject : str, body : str):
-    
-        response = ses_client.send_email(
-            Source='ask@hal-9001.com',
-            Destination={
-                'ToAddresses': [
-                    email_to
-                ]
+def send_email(email_to: str, subject: str, body: str):
+
+    response = ses_client.send_email(
+        Source='ask@hal-9001.com',
+        Destination={
+            'ToAddresses': [
+                email_to
+            ]
+        },
+        Message={
+            'Subject': {
+                'Data': subject
             },
-            Message={
-                'Subject': {
-                    'Data': subject
-                },
-                'Body': {
-                    'Text': {
-                        'Data': body,
-                    }
+            'Body': {
+                'Text': {
+                    'Data': body,
                 }
             }
-        )
-        
-        log.info("resonse from ses is: %s" % response)
+        }
+    )
+
+    log.info("resonse from ses is: %s" % response)
