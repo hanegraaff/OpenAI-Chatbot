@@ -1,0 +1,34 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+  pre_build:
+    commands:
+      - echo creating build directories
+      - mkdir python
+      - mkdir build
+      - mkdir target
+  build:
+    commands:
+      - echo creating lambda layer package
+      - pip install -r openai-lambda-layer-requirements.txt -t ./python
+      - zip -r ./OpenAILambdaLayer.zip ./python
+      - mv ./OpenAILambdaLayer.zip ./target
+
+      - echo creating lambda function package
+
+      - pip install -r ./src/requirements.txt -t ./build
+      - cp -r ./src/* ./build
+      - cd ./build
+      - zip -r ./OpenAIChat.zip *
+      - cd ..
+      - mv ./build/OpenAIChat.zip ./target
+  post_build:
+    commands:
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - target/OpenAILambdaLayer.zip
+    - target/OpenAIChat.zip
